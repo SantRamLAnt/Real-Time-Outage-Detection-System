@@ -1,0 +1,52 @@
+# Core Streamlit Framework
+streamlit>=1.28.0
+
+# Data Manipulation and Analysis
+pandas>=1.5.0
+numpy>=1.24.0
+
+# Interactive Visualization
+plotly>=5.15.0
+
+# Additional Data Science Libraries
+scipy>=1.10.0
+matplotlib>=3.6.0
+seaborn>=0.12.0
+
+# Utility Libraries
+requests>=2.28.0
+python-dateutil>=2.8.0
+
+# Optional: Production Dependencies (for full system deployment)
+# Uncomment these for production environment setup
+
+# Message Queue and Streaming
+# kafka-python>=2.0.2
+# azure-eventhub>=5.11.0
+
+# Database Connectivity  
+# psycopg2-binary>=2.9.0  # PostgreSQL/TimescaleDB
+# redis>=4.5.0
+
+# Machine Learning
+# scikit-learn>=1.3.0
+# tensorflow>=2.13.0
+
+# API Framework
+# fastapi>=0.100.0
+# uvicorn>=0.22.0
+
+# Communication Services
+# twilio>=8.5.0
+
+# Async Processing
+# asyncio  # Built into Python 3.7+
+# aiohttp>=3.8.0
+
+# Containerization and Deployment
+# docker>=6.1.0
+# kubernetes>=26.1.0
+
+# Monitoring and Logging
+# prometheus-client>=0.17.0
+# structlog>=23.1.0
