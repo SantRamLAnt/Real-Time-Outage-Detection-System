@@ -1,12 +1,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
-import plotly.express as px
 from datetime import datetime, timedelta
 import time
-import json
-from typing import Dict, List
 import random
 
 # Page configuration
@@ -241,7 +237,7 @@ with tab1:
         </div>
         """, unsafe_allow_html=True)
     
-    # Live Usage Chart
+    # Live Usage Chart using Streamlit native charts
     st.subheader("📈 Real-Time Usage Patterns")
     
     # Generate historical data for chart
@@ -260,53 +256,23 @@ with tab1:
         
         usage_data.append({
             'timestamp': timestamp,
-            'usage': (base + seasonal + noise) * anomaly,
-            'predicted': base + seasonal,
+            'Actual Usage (MW)': (base + seasonal + noise) * anomaly,
+            'Predicted (MW)': base + seasonal,
             'anomaly': anomaly != 1.0
         })
     
     df = pd.DataFrame(usage_data)
+    df.set_index('timestamp', inplace=True)
     
-    fig = go.Figure()
+    # Display chart
+    st.line_chart(df[['Actual Usage (MW)', 'Predicted (MW)']])
     
-    # Add usage line
-    fig.add_trace(go.Scatter(
-        x=df['timestamp'],
-        y=df['usage'],
-        mode='lines',
-        name='Actual Usage',
-        line=dict(color='#3498db', width=2)
-    ))
-    
-    # Add predicted line
-    fig.add_trace(go.Scatter(
-        x=df['timestamp'],
-        y=df['predicted'],
-        mode='lines',
-        name='Predicted',
-        line=dict(color='#2ecc71', width=2, dash='dash')
-    ))
-    
-    # Highlight anomalies
-    anomaly_data = df[df['anomaly']]
-    if not anomaly_data.empty:
-        fig.add_trace(go.Scatter(
-            x=anomaly_data['timestamp'],
-            y=anomaly_data['usage'],
-            mode='markers',
-            name='Detected Anomalies',
-            marker=dict(color='#e74c3c', size=8, symbol='x')
-        ))
-    
-    fig.update_layout(
-        title="Usage Pattern Analysis - Last 24 Hours",
-        xaxis_title="Time",
-        yaxis_title="Usage (MW)",
-        height=400,
-        template="plotly_white"
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
+    # Anomaly indicators
+    anomaly_count = df['anomaly'].sum()
+    if anomaly_count > 0:
+        st.error(f"🚨 {anomaly_count} anomalies detected in the last 24 hours")
+    else:
+        st.success("✅ No anomalies detected in the last 24 hours")
     
     # Recent Events Log
     st.subheader("📝 Recent Events Log")
@@ -362,28 +328,16 @@ with tab2:
         st.dataframe(arch_df, use_container_width=True)
     
     with col2:
-        st.subheader("🎯 ML Models")
+        st.subheader("🎯 ML Model Accuracy")
         
-        models = {
-            'Isolation Forest': 92.3,
-            'LSTM Networks': 89.7,
-            'Statistical Analysis': 85.1,
-            'Context Features': 94.8
+        # Model performance using native Streamlit chart
+        models_data = {
+            'Model': ['Isolation Forest', 'LSTM Networks', 'Statistical Analysis', 'Context Features'],
+            'Accuracy (%)': [92.3, 89.7, 85.1, 94.8]
         }
         
-        fig = go.Figure(data=[
-            go.Bar(x=list(models.values()), y=list(models.keys()), orientation='h',
-                   marker_color=['#3498db', '#2ecc71', '#f39c12', '#e74c3c'])
-        ])
-        
-        fig.update_layout(
-            title="Model Accuracy (%)",
-            xaxis_title="Accuracy",
-            height=300,
-            template="plotly_white"
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
+        models_df = pd.DataFrame(models_data)
+        st.bar_chart(models_df.set_index('Model'))
     
     # Feature Engineering Details
     st.subheader("⚙️ Advanced Feature Engineering")
@@ -437,9 +391,9 @@ with tab2:
     
     performance_data = {
         'Metric': ['Precision', 'Recall', 'F1-Score', 'False Positive Rate', 'Response Time', 'Uptime'],
-        'Current': [94.8, 92.1, 93.4, 2.3, '87ms', '99.97%'],
-        'Target': [95.0, 90.0, 92.5, 3.0, '100ms', '99.95%'],
-        'Industry Avg': [78.5, 71.2, 74.6, 15.2, '250ms', '99.1%']
+        'Current': ['94.8%', '92.1%', '93.4%', '2.3%', '87ms', '99.97%'],
+        'Target': ['95.0%', '90.0%', '92.5%', '3.0%', '100ms', '99.95%'],
+        'Industry Avg': ['78.5%', '71.2%', '74.6%', '15.2%', '250ms', '99.1%']
     }
     
     perf_df = pd.DataFrame(performance_data)
@@ -521,15 +475,6 @@ class OutageDetectionConsumer:
             # Batch processing for efficiency
             if self.processing_queue.qsize() >= 100:
                 await self.process_batch()
-    
-    async def process_batch(self):
-        \"\"\"Process batch of meter readings\"\"\"
-        batch = []
-        while not self.processing_queue.empty() and len(batch) < 100:
-            batch.append(await self.processing_queue.get())
-        
-        # Send to anomaly detection pipeline
-        await self.detect_anomalies(batch)
 """, language="python")
     
     with tab_code2:
@@ -581,23 +526,6 @@ class ContextAwareAnomalyDetector:
                 results.append(alert)
         
         return results
-    
-    def extract_features(self, meter_data):
-        \"\"\"Extract temporal and usage features\"\"\"
-        timestamp = meter_data['timestamp']
-        
-        features = [
-            meter_data['usage_kw'],
-            meter_data['voltage'],
-            meter_data['power_factor'],
-            timestamp.hour,  # Hour of day
-            timestamp.weekday(),  # Day of week
-            np.sin(2 * np.pi * timestamp.hour / 24),  # Cyclic hour
-            np.cos(2 * np.pi * timestamp.hour / 24),
-            self.get_historical_average(meter_data['meter_id'], timestamp)
-        ]
-        
-        return features
 """, language="python")
     
     with tab_code3:
@@ -646,30 +574,6 @@ class AlertManager:
             await self.send_immediate_notifications(affected_customers, alert)
         elif severity == 'HIGH':
             await self.schedule_notifications(affected_customers, alert, delay=5)
-    
-    async def send_immediate_notifications(self, customers, alert):
-        \"\"\"Send immediate SMS/voice notifications\"\"\"
-        message = f"Power outage detected in your area. Estimated restoration: {alert['estimated_duration']} minutes. We'll keep you updated."
-        
-        for customer in customers:
-            if customer['notification_preference'] == 'SMS':
-                self.twilio_client.messages.create(
-                    body=message,
-                    from_='+1234567890',
-                    to=customer['phone']
-                )
-            elif customer['notification_preference'] == 'VOICE':
-                self.twilio_client.calls.create(
-                    twiml=f'<Response><Say>{message}</Say></Response>',
-                    from_='+1234567890',
-                    to=customer['phone']
-                )
-        
-        self.notification_history.append({
-            'alert_id': alert['id'],
-            'customers_notified': len(customers),
-            'timestamp': datetime.now()
-        })
 
 @app.post("/alerts/create")
 async def create_alert(alert_data: dict, background_tasks: BackgroundTasks):
@@ -701,50 +605,26 @@ with tab4:
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        st.subheader("💰 Return on Investment")
+        st.subheader("💰 3-Year ROI Analysis")
         
         roi_data = {
             'Year': [2023, 2024, 2025],
-            'Development_Cost': [1200000, 400000, 200000],
-            'Operational_Savings': [800000, 2300000, 2800000],
-            'Customer_Satisfaction': [1500000, 3200000, 3800000],
-            'Net_ROI': [100000, 5100000, 6400000]
+            'Development Cost ($M)': [1.2, 0.4, 0.2],
+            'Operational Savings ($M)': [0.8, 2.3, 2.8],
+            'Customer Satisfaction Value ($M)': [1.5, 3.2, 3.8]
         }
         
         roi_df = pd.DataFrame(roi_data)
+        roi_df.set_index('Year', inplace=True)
         
-        fig = go.Figure()
+        st.bar_chart(roi_df)
         
-        fig.add_trace(go.Bar(
-            x=roi_df['Year'],
-            y=roi_df['Development_Cost'],
-            name='Development Cost',
-            marker_color='#e74c3c'
-        ))
+        # Total ROI calculation
+        total_investment = sum(roi_data['Development Cost ($M)'])
+        total_returns = sum(roi_data['Operational Savings ($M)']) + sum(roi_data['Customer Satisfaction Value ($M)'])
+        net_roi = total_returns - total_investment
         
-        fig.add_trace(go.Bar(
-            x=roi_df['Year'],
-            y=roi_df['Operational_Savings'],
-            name='Operational Savings',
-            marker_color='#2ecc71'
-        ))
-        
-        fig.add_trace(go.Bar(
-            x=roi_df['Year'],
-            y=roi_df['Customer_Satisfaction'],
-            name='Customer Satisfaction Value',
-            marker_color='#3498db'
-        ))
-        
-        fig.update_layout(
-            title="3-Year ROI Analysis ($)",
-            xaxis_title="Year",
-            yaxis_title="Amount ($)",
-            barmode='group',
-            height=400
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
+        st.success(f"**Total Net ROI: ${net_roi:.1f}M** over 3 years")
     
     with col2:
         st.subheader("🎯 Key Metrics")
@@ -825,8 +705,8 @@ with tab4:
     
     communication_data = {
         'Metric': ['Average Notification Time', 'Customer Call Volume', 'Satisfaction Score', 'App Engagement', 'Complaint Resolution'],
-        'Before_System': ['23 minutes', '15,000/day', '6.2/10', '34%', '4.5 days'],
-        'After_System': ['5 minutes', '4,200/day', '8.7/10', '89%', '1.2 days'],
+        'Before System': ['23 minutes', '15,000/day', '6.2/10', '34%', '4.5 days'],
+        'After System': ['5 minutes', '4,200/day', '8.7/10', '89%', '1.2 days'],
         'Improvement': ['↓ 78%', '↓ 72%', '↑ 40%', '↑ 162%', '↓ 73%']
     }
     
@@ -850,63 +730,28 @@ with tab5:
     with col1:
         st.subheader("🔍 Feature Importance Analysis")
         
-        feature_importance = {
-            'Planned Outage Context': 34.2,
-            'Historical Response Profile': 28.7,
-            'Feeder Configuration': 18.9,
-            'Weather Correlation': 12.3,
-            'Time-of-Day Patterns': 5.9
+        feature_data = {
+            'Feature': ['Planned Outage Context', 'Historical Response Profile', 'Feeder Configuration', 'Weather Correlation', 'Time-of-Day Patterns'],
+            'Importance (%)': [34.2, 28.7, 18.9, 12.3, 5.9]
         }
         
-        fig = go.Figure(data=[
-            go.Bar(
-                y=list(feature_importance.keys()),
-                x=list(feature_importance.values()),
-                orientation='h',
-                marker_color=['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6']
-            )
-        ])
-        
-        fig.update_layout(
-            title="Context Feature Impact (%)",
-            xaxis_title="Importance Score",
-            height=400,
-            template="plotly_white"
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
+        feature_df = pd.DataFrame(feature_data)
+        st.bar_chart(feature_df.set_index('Feature'))
     
     with col2:
-        st.subheader("📊 False Alarm Reduction")
+        st.subheader("📊 False Alarm Reduction Progress")
         
         reduction_data = {
-            'Approach': ['Baseline Thresholds', '+ Time Patterns', '+ Weather Data', '+ Feeder Context', '+ Planned Work', 'Full Context System'],
-            'False_Alarm_Rate': [23.4, 19.8, 16.2, 12.1, 7.8, 3.6],
-            'Improvement': [0, 15.4, 30.8, 48.3, 66.7, 84.6]
+            'System Enhancement': ['Baseline', 'Time Patterns', 'Weather Data', 'Feeder Context', 'Planned Work', 'Full Context'],
+            'False Alarm Rate (%)': [23.4, 19.8, 16.2, 12.1, 7.8, 3.6]
         }
         
-        fig = go.Figure()
+        reduction_df = pd.DataFrame(reduction_data)
+        st.line_chart(reduction_df.set_index('System Enhancement'))
         
-        fig.add_trace(go.Scatter(
-            x=reduction_data['Approach'],
-            y=reduction_data['False_Alarm_Rate'],
-            mode='lines+markers',
-            name='False Alarm Rate (%)',
-            line=dict(color='#e74c3c', width=3),
-            marker=dict(size=8)
-        ))
-        
-        fig.update_layout(
-            title="Progressive False Alarm Reduction",
-            xaxis_title="System Enhancement",
-            yaxis_title="False Alarm Rate (%)",
-            height=400,
-            template="plotly_white"
-        )
-        
-        fig.update_xaxis(tickangle=45)
-        
-        st.plotly_chart(fig, use_container_width=True)
+        # Show improvement percentage
+        improvement = ((23.4 - 3.6) / 23.4) * 100
+        st.success(f"**{improvement:.1f}% Total Reduction** in false alarms achieved!")
     
     # Context Feature Details
     st.subheader("⚙️ Context Feature Implementation")
@@ -995,30 +840,6 @@ class HistoricalProfileAnalyzer:
         
         self.feeder_profiles[feeder_id] = profile
         return profile
-    
-    def apply_historical_context(self, anomaly_score, feeder_id, current_conditions):
-        \"\"\"Adjust anomaly score based on historical context\"\"\"
-        profile = self.feeder_profiles.get(feeder_id)
-        if not profile:
-            return anomaly_score
-        
-        # Weather adjustment
-        weather_factor = self.get_weather_adjustment(
-            current_conditions, profile['weather_sensitivity']
-        )
-        
-        # Equipment reliability adjustment
-        reliability_factor = profile['equipment_reliability']
-        
-        # Seasonal adjustment
-        seasonal_factor = self.get_seasonal_factor(
-            datetime.now(), profile['seasonal_patterns']
-        )
-        
-        # Combined adjustment
-        adjusted_score = anomaly_score * weather_factor * reliability_factor * seasonal_factor
-        
-        return adjusted_score
 """, language="python")
     
     with tab_ctx3:
@@ -1053,33 +874,7 @@ class FeederContextAnalyzer:
         context['upstream_feeders'] = self.get_upstream_feeders(feeder_id)
         context['downstream_customers'] = self.get_downstream_customers(feeder_id)
         
-        # Equipment health indicators
-        context['transformer_health'] = await self.assess_transformer_health(feeder_id)
-        context['line_condition'] = await self.assess_line_condition(feeder_id)
-        
         return context
-    
-    def calculate_context_weight(self, context):
-        \"\"\"Calculate anomaly detection weight based on context\"\"\"
-        weight = 1.0
-        
-        # High load conditions - increase sensitivity
-        if context['current_load'] > 0.85:
-            weight *= 1.3
-        
-        # Recent switching - decrease sensitivity temporarily
-        if context['recent_switches']:
-            weight *= 0.6
-        
-        # Equipment alarms - increase sensitivity
-        if context['equipment_alarms']:
-            weight *= 1.5
-        
-        # Poor equipment health - increase sensitivity
-        if context['transformer_health'] < 0.7:
-            weight *= 1.4
-        
-        return min(weight, 2.0)  # Cap at 2x
 """, language="python")
     
     # Implementation Results
@@ -1094,8 +889,8 @@ class FeederContextAnalyzer:
             'Operational Cost',
             'System Reliability'
         ],
-        'Before_Context': ['23.4%', '76.2%', '8.5 min', '6.2/10', '$3.2M/year', '97.8%'],
-        'After_Context': ['3.6%', '94.8%', '2.1 min', '8.7/10', '$1.9M/year', '99.97%'],
+        'Before Context': ['23.4%', '76.2%', '8.5 min', '6.2/10', '$3.2M/year', '97.8%'],
+        'After Context': ['3.6%', '94.8%', '2.1 min', '8.7/10', '$1.9M/year', '99.97%'],
         'Improvement': ['↓ 84.6%', '↑ 24.4%', '↓ 75.3%', '↑ 40.3%', '↓ 40.6%', '↑ 2.2%']
     }
     
