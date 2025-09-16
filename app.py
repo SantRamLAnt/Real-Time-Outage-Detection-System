@@ -78,41 +78,41 @@ if 'last_update' not in st.session_state:
 # Welcome overlay
 if not st.session_state.demo_started:
     st.markdown("""
-    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 85%; 
                 background: linear-gradient(135deg, #1f4e79 0%, #2980b9 50%, #e74c3c 100%); 
                 z-index: 999; display: flex; justify-content: center; align-items: center;">
         <div style="background: white; padding: 3rem; border-radius: 20px; text-align: center; 
-                    box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 650px; min-height: 500px;
-                    display: flex; flex-direction: column; justify-content: space-between;">
-            <div>
-                <h1 style="color: #1f4e79; margin-bottom: 1rem;">⚡ Real-Time Outage Detection System</h1>
-                <h3 style="color: #2980b9; margin-bottom: 2rem;">Enhanced Customer Experience Through Intelligent Monitoring</h3>
-                <p style="color: #666; font-size: 1.1rem; margin-bottom: 2rem;">
-                    Experience our production-ready system that reduced false alarms by 85% through 
-                    context-aware anomaly detection and intelligent pattern recognition.
-                </p>
-                <div style="margin-bottom: 3rem; line-height: 2.5;">
-                    <div style="margin-bottom: 1rem;">
-                        <span style="background: #e74c3c; color: white; padding: 0.6rem 1.2rem; 
-                                   border-radius: 25px; margin: 0.4rem; display: inline-block; 
-                                   font-weight: bold;">Kafka/Event Hubs</span>
-                        <span style="background: #3498db; color: white; padding: 0.6rem 1.2rem; 
-                                   border-radius: 25px; margin: 0.4rem; display: inline-block; 
-                                   font-weight: bold;">TimescaleDB</span>
-                    </div>
-                    <div>
-                        <span style="background: #2ecc71; color: white; padding: 0.6rem 1.2rem; 
-                                   border-radius: 25px; margin: 0.4rem; display: inline-block; 
-                                   font-weight: bold;">FastAPI</span>
-                        <span style="background: #f39c12; color: white; padding: 0.6rem 1.2rem; 
-                                   border-radius: 25px; margin: 0.4rem; display: inline-block; 
-                                   font-weight: bold;">Twilio Integration</span>
-                    </div>
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 650px;">
+            <h1 style="color: #1f4e79; margin-bottom: 1rem;">⚡ Real-Time Outage Detection System</h1>
+            <h3 style="color: #2980b9; margin-bottom: 2rem;">Enhanced Customer Experience Through Intelligent Monitoring</h3>
+            <p style="color: #666; font-size: 1.1rem; margin-bottom: 2rem;">
+                Experience our production-ready system that reduced false alarms by 85% through 
+                context-aware anomaly detection and intelligent pattern recognition.
+            </p>
+            <div style="margin-bottom: 2rem; line-height: 2.5;">
+                <div style="margin-bottom: 1rem;">
+                    <span style="background: #e74c3c; color: white; padding: 0.6rem 1.2rem; 
+                               border-radius: 25px; margin: 0.4rem; display: inline-block; 
+                               font-weight: bold;">Kafka/Event Hubs</span>
+                    <span style="background: #3498db; color: white; padding: 0.6rem 1.2rem; 
+                               border-radius: 25px; margin: 0.4rem; display: inline-block; 
+                               font-weight: bold;">TimescaleDB</span>
+                </div>
+                <div>
+                    <span style="background: #2ecc71; color: white; padding: 0.6rem 1.2rem; 
+                               border-radius: 25px; margin: 0.4rem; display: inline-block; 
+                               font-weight: bold;">FastAPI</span>
+                    <span style="background: #f39c12; color: white; padding: 0.6rem 1.2rem; 
+                               border-radius: 25px; margin: 0.4rem; display: inline-block; 
+                               font-weight: bold;">Twilio Integration</span>
                 </div>
             </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Add some spacing and create a container for the button
+    st.markdown("<br><br><br><br><br>", unsafe_allow_html=True)
     
     # Create columns to center the button
     col1, col2, col3 = st.columns([1, 2, 1])
